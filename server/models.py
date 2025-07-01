@@ -1,5 +1,31 @@
-from flask_sqlalchemy import SQLAlchemy
 
+from flask_sqlalchemy import SQLAlchemy
+"""
+models.py
+
+This file defines the database models for the Classroom Booking System. It uses SQLAlchemy to map Python classes to database tables. 
+Each class represents a table in the database, and the attributes of the class represent the columns of the table. 
+This file is essential for managing the database structure and relationships between different entities in the system.
+
+Classes:
+    User:
+        Represents a user in the system. Users can have different roles such as 'cr' (Class Representative), 'user', or 'admin'.
+        Attributes include user details like name, email, password, role, and approval status.
+    
+    CR:
+        Represents a Class Representative (CR). Each CR is associated with a user and has additional details like branch and section.
+        CRs can report issues, which are linked to this class.
+
+    Issue:
+        Represents an issue reported by a CR. Each issue is associated with a CR and contains details like subject, description, and timestamp.
+        Issues can have a single admin reply.
+
+    AdminReply:
+        Represents a reply from an admin to a reported issue. Each reply is linked to an issue and contains the reply message, timestamp, and a seen status.
+"""
+
+# Initialize the SQLAlchemy object to be used for database operations.
+# This object acts as the interface between the Flask application and the database.
 db = SQLAlchemy()
 
 class User(db.Model):

@@ -1,10 +1,49 @@
 from flask import Flask, request, jsonify
+"""
+This script implements a Classroom Booking System using Flask. It provides APIs for user management, 
+classroom booking, issue reporting, and admin functionalities. Below is a breakdown of the code:
+1. **Imports and Configurations**:
+    - Imports necessary libraries for Flask, SQLAlchemy, CORS, email handling, and date/time operations.
+    - Configures the Flask app, SQLAlchemy database, and email settings.
+2. **Database Models**:
+    - `User`: Represents a user in the system with attributes like name, email, password, year, section, phone, and approval status.
+    - `CR`: Represents a Class Representative (CR) with attributes like name, email, password, year, section, phone, batch, and related issues.
+    - `Issue`: Represents an issue reported by a CR with attributes like subject, description, timestamp, resolution status, and admin reply.
+    - `AdminReply`: Represents a reply from the admin to a reported issue.
+    - `ClassroomBooking`: Represents a classroom booking with attributes like classroom name, timing, subject, faculty, CR name, and day.
+3. **Routes**:
+    - `/`: A simple route to check if the server is running.
+    - `/signup`: Handles user signup requests and validates input fields.
+    - `/login`: Handles user and admin login with role-based responses.
+    - `/get-signup-requests`: Fetches unapproved user signup requests for admin approval.
+    - `/approve-cr`: Approves a user as a CR and moves them to the CR list.
+    - `/reject-cr`: Rejects a user signup request and removes them from the database.
+    - `/approved-crs`: Fetches a list of all approved CRs.
+    - `/remove-cr`: Removes a CR from the system.
+    - `/report-issue`: Allows CRs to report issues with details like title, description, and timestamp.
+    - `/issues`: Fetches all reported issues with details like subject, description, timestamp, and admin reply.
+    - `/reply-to-issue`: Allows the admin to reply to a reported issue and marks it as resolved.
+    - `/book-classroom/<day>`: Allows CRs to book a classroom for a specific day and time.
+    - `/get-bookings<classroom_name>`: Fetches all bookings for a specific classroom.
+4. **Error Handling**:
+    - Includes error handling for database operations and invalid inputs.
+5. **Database Initialization**:
+    - Creates all database tables when the app starts.
+6. **Email Notifications**:
+    - Sends email notifications to CRs when the admin replies to their reported issues.
+"""
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_mail import Mail, Message
 from datetime import datetime
 import re
-
+# Flask is a micro web framework for building web applications
+# request is used to handle HTTP requests, jsonify is used to return JSON responses
+# SQLAlchemy is an ORM (Object Relational Mapper) for database operations
+# CORS is used to handle Cross-Origin Resource Sharing
+# Mail and Message are used for sending emails
+# datetime is used for handling date and time operations
+# re is used for regular expression operations
 app = Flask(__name__)
 CORS(app, resources={r"/*": {"origins": "*"}})
 
@@ -19,7 +58,7 @@ app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USE_SSL'] = False
 app.config['MAIL_USERNAME'] = 'boydevil77740@gmail.com'  # Replace with your email
-app.config['MAIL_PASSWORD'] = 'qokj gjuw pnrl wdzl'  # Replace with your email password
+app.config['MAIL_PASSWORD'] = 'aaaa'  # Replace with your email password
 app.config['MAIL_DEFAULT_SENDER'] = 'boydevil77740@gmail.com'  # Replace with your email
 mail = Mail(app)
 
@@ -34,7 +73,16 @@ class User(db.Model):
     section = db.Column(db.String(10))
     phone = db.Column(db.String(20))
     approved = db.Column(db.Boolean, default=False)
-
+    # The User class represents a user in the system.
+    # Each attribute corresponds to a column in the 'user' table in the database.
+    # id: Primary key, unique identifier for each user.
+    # name: Name of the user.
+    # email: Email address of the user, must be unique.
+    # password: Password for the user's account.
+    # year: Academic year of the user.
+    # section: Section of the user.
+    # phone: Phone number of the user.
+    # approved: Boolean indicating whether the user is approved by the admin.
 class CR(db.Model):
     __tablename__ = 'cr'
     id = db.Column(db.Integer, primary_key=True)
@@ -46,14 +94,41 @@ class CR(db.Model):
     phone = db.Column(db.String(20))
     batch = db.Column(db.String(10))
     issues = db.relationship('Issue', backref='cr', lazy=True)
-
+    # The CR class represents a Class Representative in the system.
+    # Each attribute corresponds to a column in the 'cr' table in the database.
+    # id: Primary key, unique identifier for each CR.
+    # name: Name of the CR.
+    # email: Email address of the CR, must be unique.
+    # password: Password for the CR's account.
+    # year: Academic year of the CR.
+    # section: Section of the CR.
+    # phone: Phone number of the CR.
+    # batch: Batch of the CR.
+    # issues: Relationship to the Issue model, representing issues reported by the CR.
 class Issue(db.Model):
+    """
+    Represents an issue reported in the Classroom Booking System.
+    Attributes:
+        id (int): The primary key for the issue.
+        cr_id (int): A foreign key referencing the 'cr' table's id, 
+                     indicating the classroom related to the issue.
+        subject (str): The subject or title of the issue, with a maximum length of 200 characters.
+        description (str): A detailed description of the issue.
+        timestamp (datetime): The date and time when the issue was created. 
+                              Defaults to the current timestamp using `db.func.current_timestamp()`.
+                              - `db.func.current_timestamp()`: Automatically sets the timestamp to the 
+                                current date and time when the record is created.
+        resolved (bool): A flag indicating whether the issue has been resolved. Defaults to False.
+        reply (AdminReply): A one-to-one relationship with the AdminReply model, representing the 
+                            admin's reply to the issue.
+    """
     __tablename__ = 'issue'
     id = db.Column(db.Integer, primary_key=True)
     cr_id = db.Column(db.Integer, db.ForeignKey('cr.id'))
     subject = db.Column(db.String(200))
     description = db.Column(db.Text)
     timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    
     resolved = db.Column(db.Boolean, default=False)
     reply = db.relationship('AdminReply', backref='issue', uselist=False)
 
@@ -418,7 +493,8 @@ def get_bookings(classroom_name):
         print("Error fetching bookings:", str(e))
         return jsonify({'success': False, 'message': 'An error occurred while fetching bookings'}), 500
 
-
+#Flask App Execution**:
+# Runs the Flask app in debug mode.
 
 if __name__ == '__main__':
     with app.app_context():
